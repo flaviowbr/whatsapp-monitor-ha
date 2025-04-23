@@ -1,0 +1,19 @@
+"""
+WhatsApp Monitor - Manifesto do componente para Home Assistant
+Desenvolvido para Raspberry Pi 4 com Home Assistant
+"""
+
+{
+  "domain": "whatsapp_monitor",
+  "name": "WhatsApp Monitor",
+  "documentation": "https://github.com/manus-ai/whatsapp-monitor-ha",
+  "dependencies": [],
+  "codeowners": ["@manus-ai"],
+  "requirements": [
+    "selenium>=4.1.0",
+    "webdriver-manager>=3.5.2"
+  ],
+  "config_flow": true,
+  "iot_class": "local_polling",
+  "version": "1.0.0"
+}
