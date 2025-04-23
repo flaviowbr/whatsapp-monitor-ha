@@ -1,8 +1,3 @@
-"""
-WhatsApp Monitor - Manifesto do componente para Home Assistant
-Desenvolvido para Raspberry Pi 4 com Home Assistant
-"""
-
 {
   "domain": "whatsapp_monitor",
   "name": "WhatsApp Monitor",
