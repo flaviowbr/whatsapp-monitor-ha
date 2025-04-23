@@ -1,7 +1,7 @@
 {
   "domain": "whatsapp_monitor",
   "name": "WhatsApp Monitor",
-  "documentation": "https://github.com/manus-ai/whatsapp-monitor-ha",
+  "documentation": "https://github.com/flaviowbr/whatsapp-monitor-ha",
   "dependencies": [],
   "codeowners": ["@manus-ai"],
   "requirements": [
