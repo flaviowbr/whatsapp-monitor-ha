@@ -42,34 +42,31 @@ async def async_setup(hass: HomeAssistant, config: dict):
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN]["config"] = config[DOMAIN]
 
-    # Criar diretório www se não existir
-    www_dir = hass.config.path("www")
-    if not os.path.exists(www_dir):
-        os.makedirs(www_dir)
-
-    # Registrar serviço para mostrar QR code
-    async def handle_show_qrcode(call):
-        """Manipulador para o serviço de exibição do QR Code."""
-        # Criar URL para o navegador
-        qrcode_url = f"{hass.config.internal_url}/whatsapp_login"
+    # Registrar serviço para atualizar palavras-chave
+    async def handle_update_keywords(call):
+        """Manipulador para o serviço de atualização de palavras-chave."""
+        palavras_chave = call.data.get("palavras_chave", [])
         
-        # Notificar o usuário
-        hass.components.persistent_notification.create(
-            f"Escaneie o QR Code para conectar ao WhatsApp Web. [Abrir QR Code]({qrcode_url})",
-            title="WhatsApp QR Code",
-            notification_id="whatsapp_qrcode"
-        )
+        # Atualizar configuração
+        if "config" in hass.data[DOMAIN]:
+            hass.data[DOMAIN]["config"]["palavras_chave"] = palavras_chave
+            _LOGGER.info(f"Palavras-chave atualizadas: {palavras_chave}")
         
         return True
 
     # Registrar serviço
     hass.services.async_register(
-        DOMAIN, "show_qrcode", handle_show_qrcode, schema=vol.Schema({})
+        DOMAIN, 
+        "update_keywords", 
+        handle_update_keywords, 
+        schema=vol.Schema({
+            vol.Required("palavras_chave"): vol.All(cv.ensure_list, [cv.string]),
+        })
     )
 
     # Criar notificação inicial
     hass.components.persistent_notification.create(
-        f"WhatsApp Monitor foi inicializado. [Abrir WhatsApp Web]({hass.config.internal_url}/whatsapp_login)",
+        "WhatsApp Monitor foi inicializado. Use as opções de configuração para personalizar as palavras-chave.",
         title="WhatsApp Monitor",
         notification_id="whatsapp_monitor_init"
     )
@@ -81,35 +78,45 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN]["config"] = dict(entry.data)
 
-    # Criar diretório www se não existir
-    www_dir = hass.config.path("www")
-    if not os.path.exists(www_dir):
-        os.makedirs(www_dir)
-
-    # Registrar serviço para mostrar QR code
-    async def handle_show_qrcode(call):
-        """Manipulador para o serviço de exibição do QR Code."""
-        # Criar URL para o navegador
-        qrcode_url = f"{hass.config.internal_url}/whatsapp_login"
+    # Registrar serviço para atualizar palavras-chave
+    async def handle_update_keywords(call):
+        """Manipulador para o serviço de atualização de palavras-chave."""
+        palavras_chave = call.data.get("palavras_chave", [])
         
-        # Notificar o usuário
-        hass.components.persistent_notification.create(
-            f"Escaneie o QR Code para conectar ao WhatsApp Web. [Abrir QR Code]({qrcode_url})",
-            title="WhatsApp QR Code",
-            notification_id="whatsapp_qrcode"
-        )
+        # Atualizar configuração
+        if "config" in hass.data[DOMAIN]:
+            hass.data[DOMAIN]["config"]["palavras_chave"] = palavras_chave
+            _LOGGER.info(f"Palavras-chave atualizadas: {palavras_chave}")
         
         return True
 
     # Registrar serviço
     hass.services.async_register(
-        DOMAIN, "show_qrcode", handle_show_qrcode, schema=vol.Schema({})
+        DOMAIN, 
+        "update_keywords", 
+        handle_update_keywords, 
+        schema=vol.Schema({
+            vol.Required("palavras_chave"): vol.All(cv.ensure_list, [cv.string]),
+        })
     )
 
     # Configurar sensores
     hass.async_create_task(
         hass.helpers.discovery.async_load_platform("sensor", DOMAIN, {}, entry.data)
     )
+
+    # Criar notificação com instruções para WhatsApp Web
+    codigo = entry.data.get("codigo_autenticacao", "")
+    if codigo:
+        hass.components.persistent_notification.create(
+            f"Para conectar ao WhatsApp Web:\n\n"
+            f"1. Abra o WhatsApp no seu smartphone\n"
+            f"2. Toque em Menu (três pontos) > Aparelhos conectados > Conectar um aparelho\n"
+            f"3. Digite o código: {codigo}\n\n"
+            f"Você pode editar as palavras-chave a qualquer momento nas opções de configuração da integração.",
+            title="WhatsApp Monitor - Código de Autenticação",
+            notification_id="whatsapp_auth_code"
+        )
 
     return True
 
@@ -119,9 +126,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     await hass.config_entries.async_forward_entry_unload(entry, "sensor")
     
     # Remover serviços
-    hass.services.async_remove(DOMAIN, "show_qrcode")
+    hass.services.async_remove(DOMAIN, "update_keywords")
     
     # Limpar dados
     hass.data.pop(DOMAIN)
     
     return True
+
+async def async_options_updated(hass, entry):
+    """Manipular opções atualizadas."""
+    hass.data[DOMAIN]["config"] = {**entry.data, **entry.options}
