@@ -1,0 +1,11 @@
+update_keywords:
+  name: Atualizar palavras-chave
+  description: Atualiza a lista de palavras-chave para identificação de mensagens importantes.
+  fields:
+    palavras_chave:
+      name: Palavras-chave
+      description: Lista de palavras-chave para identificar mensagens importantes.
+      required: true
+      example: '["urgente", "importante", "reunião", "prazo"]'
+      selector:
+        object:
