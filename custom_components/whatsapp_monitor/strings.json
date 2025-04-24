@@ -1,0 +1,25 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Autenticação WhatsApp Web",
+        "description": "Escaneie o QR code para se conectar ao WhatsApp Web. [Abrir QR Code]({qr_code_url})",
+        "data": {
+          "qr_code_scanned": "Já escaneei o QR code"
+        }
+      },
+      "config": {
+        "title": "Configuração do WhatsApp Monitor",
+        "description": "Configure as opções do WhatsApp Monitor",
+        "data": {
+          "name": "Nome",
+          "palavras_chave_predefinidas": "Palavras-chave predefinidas",
+          "palavras_chave_personalizadas": "Palavras-chave personalizadas (separadas por vírgula)",
+          "intervalo_verificacao": "Intervalo de verificação (minutos)",
+          "intervalo_resumo": "Intervalo de resumo (minutos)",
+          "max_mensagens_resumo": "Máximo de mensagens no resumo"
+        }
+      }
+    }
+  }
+}
