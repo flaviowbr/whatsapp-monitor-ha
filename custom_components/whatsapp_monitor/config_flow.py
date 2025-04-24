@@ -6,19 +6,16 @@ Desenvolvido para Raspberry Pi 4 com Home Assistant
 import logging
 import voluptuous as vol
 import os
-import aiohttp
-import async_timeout
 from homeassistant import config_entries
-from homeassistant.components.http import HomeAssistantView
-from homeassistant.config_entries import ConfigFlow
+from homeassistant.config_entries import ConfigFlow, OptionsFlow, ConfigEntry
 from homeassistant.const import CONF_NAME
 import homeassistant.helpers.config_validation as cv
 
 from . import DOMAIN
 
-_LOGGER = logging.getLogger(__name__) 
+_LOGGER = logging.getLogger(__name__)
 
-# Esquema de configuração para o fluxo de configuração - Etapa 2
+# Esquema de configuração para o fluxo de configuração
 CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME, default="WhatsApp Monitor"): cv.string,
     vol.Optional("palavras_chave_predefinidas"): cv.multi_select({
@@ -45,99 +42,10 @@ CONFIG_SCHEMA = vol.Schema({
     ),
 })
 
-# Esquema para a primeira etapa - QR Code
-QR_CODE_SCHEMA = vol.Schema({
-    vol.Optional("qr_code_scanned", default=False): cv.boolean,
+# Esquema para a autenticação com código
+AUTH_CODE_SCHEMA = vol.Schema({
+    vol.Required("codigo_autenticacao"): cv.string,
 })
-
-class WhatsAppLoginView(HomeAssistantView):
-    """View para exibir a página de login do WhatsApp."""
-    
-    requires_auth = False
-    url = "/whatsapp_login"
-    name = "whatsapp_login"
-    
-    async def get(self, request):
-        """Handle GET request."""
-        html_content = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>WhatsApp Web Login</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 20px;
-                    text-align: center;
-                }
-                .container {
-                    max-width: 800px;
-                    margin: 0 auto;
-                    padding: 20px;
-                    border: 1px solid #ddd;
-                    border-radius: 10px;
-                }
-                .qr-container {
-                    width: 100%;
-                    height: 500px;
-                    overflow: hidden;
-                    position: relative;
-                }
-                .qr-container iframe {
-                    width: 100%;
-                    height: 100%;
-                    border: none;
-                    transform: scale(1.2);
-                    transform-origin: 0 0;
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                }
-                .button {
-                    background-color: #4CAF50;
-                    border: none;
-                    color: white;
-                    padding: 15px 32px;
-                    text-align: center;
-                    text-decoration: none;
-                    display: inline-block;
-                    font-size: 16px;
-                    margin: 20px 2px;
-                    cursor: pointer;
-                    border-radius: 4px;
-                }
-                .note {
-                    margin-top: 20px;
-                    padding: 10px;
-                    background-color: #f8f8f8;
-                    border-left: 4px solid #4CAF50;
-                    text-align: left;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>WhatsApp Web Login</h1>
-                <p>Escaneie o QR code abaixo com seu smartphone para fazer login no WhatsApp Web:</p>
-                <div class="qr-container">
-                    <iframe src="https://web.whatsapp.com/" sandbox="allow-same-origin allow-scripts allow-forms"></iframe>
-                </div>
-                <div class="note">
-                    <p><strong>Nota:</strong> Se o QR code não aparecer, tente:</p>
-                    <ol>
-                        <li>Abrir diretamente <a href="https://web.whatsapp.com/" target="_blank">web.whatsapp.com</a> em uma nova aba</li>
-                        <li>Escanear o QR code nessa nova aba</li>
-                        <li>Voltar para esta página e clicar em "Continuar Configuração"</li>
-                    </ol>
-                </div>
-                <a href="/config/integrations/config_flow_start?domain=whatsapp_monitor&qr_code_scanned=true" class="button">Continuar Configuração</a>
-            </div>
-        </body>
-        </html>
-        """
-        return aiohttp.web.Response(text=html_content, content_type="text/html") 
 
 class WhatsAppMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
     """Manipula o fluxo de configuração para WhatsApp Monitor."""
@@ -147,31 +55,26 @@ class WhatsAppMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
     
     def __init__(self):
         """Inicializa o fluxo de configuração."""
-        self._qr_code_scanned = False
+        self._auth_code = None
     
     async def async_step_user(self, user_input=None):
         """Manipula o fluxo de configuração iniciado pelo usuário."""
-        # Registrar a view para o QR code
-        if not hasattr(self.hass.http, "_registered_views")  or not any(view.url == "/whatsapp_login" for view in self.hass.http._registered_views) :
-            self.hass.http.register_view(WhatsAppLoginView() )
+        errors = {}
         
-        # Verificar se o QR code já foi escaneado
-        if user_input is not None and user_input.get("qr_code_scanned", False):
-            self._qr_code_scanned = True
+        if user_input is not None:
+            self._auth_code = user_input.get("codigo_autenticacao")
+            # Simular verificação bem-sucedida do código
             return await self.async_step_config()
         
-        # Mostrar a página de QR code
+        # Mostrar a página de entrada do código de autenticação
         return self.async_show_form(
             step_id="user",
-            data_schema=QR_CODE_SCHEMA,
-            description_placeholders={
-                "qr_code_url": f"{self.hass.config.internal_url}/whatsapp_login"
-            },
-            errors={},
+            data_schema=AUTH_CODE_SCHEMA,
+            errors=errors,
         )
     
     async def async_step_config(self, user_input=None):
-        """Segunda etapa: configuração após escanear o QR code."""
+        """Segunda etapa: configuração após autenticação."""
         errors = {}
         
         if user_input is not None:
@@ -191,9 +94,12 @@ class WhatsAppMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
             config_data = {
                 CONF_NAME: user_input.get(CONF_NAME, "WhatsApp Monitor"),
                 "palavras_chave": todas_palavras_chave,
+                "palavras_chave_predefinidas": list(palavras_chave_predefinidas),
+                "palavras_chave_personalizadas": palavras_chave_personalizadas,
                 "intervalo_verificacao": user_input.get("intervalo_verificacao", 15),
                 "intervalo_resumo": user_input.get("intervalo_resumo", 60),
                 "max_mensagens_resumo": user_input.get("max_mensagens_resumo", 10),
+                "codigo_autenticacao": self._auth_code,
             }
             
             return self.async_create_entry(
@@ -205,4 +111,79 @@ class WhatsAppMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="config",
             data_schema=CONFIG_SCHEMA,
             errors=errors
+        )
+    
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        """Obter o fluxo de opções para esta entrada."""
+        return WhatsAppMonitorOptionsFlow(config_entry)
+
+class WhatsAppMonitorOptionsFlow(OptionsFlow):
+    """Fluxo de opções para WhatsApp Monitor."""
+
+    def __init__(self, config_entry):
+        """Inicializa o fluxo de opções."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Manipula as opções."""
+        if user_input is not None:
+            # Processar palavras-chave personalizadas
+            palavras_chave_predefinidas = user_input.get("palavras_chave_predefinidas", [])
+            palavras_chave_personalizadas = user_input.get("palavras_chave_personalizadas", "")
+            
+            # Converter string de palavras-chave personalizadas em lista
+            palavras_personalizadas = []
+            if palavras_chave_personalizadas:
+                palavras_personalizadas = [p.strip() for p in palavras_chave_personalizadas.split(",") if p.strip()]
+            
+            # Combinar palavras-chave predefinidas e personalizadas
+            todas_palavras_chave = list(palavras_chave_predefinidas) + palavras_personalizadas
+            
+            # Atualizar dados de configuração
+            return self.async_create_entry(title="", data={
+                "palavras_chave": todas_palavras_chave,
+                "palavras_chave_predefinidas": list(palavras_chave_predefinidas),
+                "palavras_chave_personalizadas": palavras_chave_personalizadas,
+                "intervalo_verificacao": user_input.get("intervalo_verificacao", 15),
+                "intervalo_resumo": user_input.get("intervalo_resumo", 60),
+                "max_mensagens_resumo": user_input.get("max_mensagens_resumo", 10),
+            })
+
+        # Obter valores atuais
+        palavras_chave_predefinidas = self.config_entry.data.get("palavras_chave_predefinidas", [])
+        palavras_chave_personalizadas = self.config_entry.data.get("palavras_chave_personalizadas", "")
+        intervalo_verificacao = self.config_entry.data.get("intervalo_verificacao", 15)
+        intervalo_resumo = self.config_entry.data.get("intervalo_resumo", 60)
+        max_mensagens_resumo = self.config_entry.data.get("max_mensagens_resumo", 10)
+
+        # Criar esquema de opções
+        options_schema = vol.Schema({
+            vol.Optional("palavras_chave_predefinidas", default=palavras_chave_predefinidas): cv.multi_select({
+                "urgente": "Urgente",
+                "importante": "Importante",
+                "atenção": "Atenção",
+                "prioridade": "Prioridade",
+                "crítico": "Crítico",
+                "emergência": "Emergência",
+                "ajuda": "Ajuda",
+                "socorro": "Socorro",
+                "imediato": "Imediato",
+                "prazo": "Prazo"
+            }),
+            vol.Optional("palavras_chave_personalizadas", default=palavras_chave_personalizadas): cv.string,
+            vol.Optional("intervalo_verificacao", default=intervalo_verificacao): vol.All(
+                vol.Coerce(int), vol.Range(min=5, max=60)
+            ),
+            vol.Optional("intervalo_resumo", default=intervalo_resumo): vol.All(
+                vol.Coerce(int), vol.Range(min=15, max=1440)
+            ),
+            vol.Optional("max_mensagens_resumo", default=max_mensagens_resumo): vol.All(
+                vol.Coerce(int), vol.Range(min=5, max=50)
+            ),
+        })
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=options_schema,
         )
