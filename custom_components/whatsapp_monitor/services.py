@@ -22,6 +22,8 @@ SCHEMA_CONNECT = vol.Schema({})
 
 SCHEMA_DISCONNECT = vol.Schema({})
 
+SCHEMA_SHOW_QRCODE = vol.Schema({})
+
 async def async_setup_services(hass):
     """Configurar serviços para WhatsApp Monitor."""
     
@@ -57,6 +59,24 @@ async def async_setup_services(hass):
             disconnect_service, hass
         )
     
+    async def handle_show_qrcode(call):
+        """Manipulador para o serviço de exibição do QR Code."""
+        # Criar URL para o navegador
+        qrcode_url = f"{hass.config.internal_url}/local/whatsapp_qrcode.html"
+        
+        # Notificar o usuário
+        await hass.services.async_call(
+            "persistent_notification",
+            "create",
+            {
+                "title": "WhatsApp QR Code",
+                "message": f"Escaneie o QR Code para conectar ao WhatsApp Web. [Abrir QR Code]({qrcode_url})",
+                "notification_id": "whatsapp_qrcode"
+            }
+        )
+        
+        return True
+    
     # Registrar serviços
     hass.services.async_register(
         DOMAIN, "check_messages", handle_check_messages, schema=SCHEMA_CHECK_MESSAGES
@@ -72,6 +92,10 @@ async def async_setup_services(hass):
     
     hass.services.async_register(
         DOMAIN, "disconnect", handle_disconnect, schema=SCHEMA_DISCONNECT
+    )
+    
+    hass.services.async_register(
+        DOMAIN, "show_qrcode", handle_show_qrcode, schema=SCHEMA_SHOW_QRCODE
     )
     
     return True
