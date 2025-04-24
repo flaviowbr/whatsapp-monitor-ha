@@ -47,49 +47,11 @@ async def async_setup(hass: HomeAssistant, config: dict):
     if not os.path.exists(www_dir):
         os.makedirs(www_dir)
 
-    # Criar arquivo HTML para WhatsApp Web
-    html_path = os.path.join(www_dir, "whatsapp_login.html")
-    with open(html_path, "w") as f:
-        f.write("""<!DOCTYPE html>
-<html>
-<head>
-    <title>WhatsApp Web Login</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-        }
-        iframe {
-            width: 100%;
-            height: 600px;
-            border: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>WhatsApp Web Login</h1>
-        <p>Escaneie o QR code abaixo com seu smartphone para fazer login no WhatsApp Web:</p>
-        <iframe src="https://web.whatsapp.com/"></iframe>
-        <p>Após escanear o QR code, você pode fechar esta página.</p>
-    </div>
-</body>
-</html>""") 
-
     # Registrar serviço para mostrar QR code
     async def handle_show_qrcode(call):
         """Manipulador para o serviço de exibição do QR Code."""
         # Criar URL para o navegador
-        qrcode_url = f"{hass.config.internal_url}/local/whatsapp_login.html"
+        qrcode_url = f"{hass.config.internal_url}/whatsapp_login"
         
         # Notificar o usuário
         hass.components.persistent_notification.create(
@@ -107,7 +69,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
     # Criar notificação inicial
     hass.components.persistent_notification.create(
-        f"WhatsApp Monitor foi inicializado. [Abrir WhatsApp Web]({hass.config.internal_url}/local/whatsapp_login.html)",
+        f"WhatsApp Monitor foi inicializado. [Abrir WhatsApp Web]({hass.config.internal_url}/whatsapp_login)",
         title="WhatsApp Monitor",
         notification_id="whatsapp_monitor_init"
     )
@@ -124,49 +86,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if not os.path.exists(www_dir):
         os.makedirs(www_dir)
 
-    # Criar arquivo HTML para WhatsApp Web
-    html_path = os.path.join(www_dir, "whatsapp_login.html")
-    with open(html_path, "w") as f:
-        f.write("""<!DOCTYPE html>
-<html>
-<head>
-    <title>WhatsApp Web Login</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-        }
-        iframe {
-            width: 100%;
-            height: 600px;
-            border: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>WhatsApp Web Login</h1>
-        <p>Escaneie o QR code abaixo com seu smartphone para fazer login no WhatsApp Web:</p>
-        <iframe src="https://web.whatsapp.com/"></iframe>
-        <p>Após escanear o QR code, você pode fechar esta página.</p>
-    </div>
-</body>
-</html>""") 
-
     # Registrar serviço para mostrar QR code
     async def handle_show_qrcode(call):
         """Manipulador para o serviço de exibição do QR Code."""
         # Criar URL para o navegador
-        qrcode_url = f"{hass.config.internal_url}/local/whatsapp_login.html"
+        qrcode_url = f"{hass.config.internal_url}/whatsapp_login"
         
         # Notificar o usuário
         hass.components.persistent_notification.create(
@@ -180,13 +104,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # Registrar serviço
     hass.services.async_register(
         DOMAIN, "show_qrcode", handle_show_qrcode, schema=vol.Schema({})
-    )
-
-    # Criar notificação inicial
-    hass.components.persistent_notification.create(
-        f"WhatsApp Monitor foi inicializado. [Abrir WhatsApp Web]({hass.config.internal_url}/local/whatsapp_login.html)",
-        title="WhatsApp Monitor",
-        notification_id="whatsapp_monitor_init"
     )
 
     # Configurar sensores
