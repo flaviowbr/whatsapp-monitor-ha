@@ -13,7 +13,7 @@ import homeassistant.helpers.config_validation as cv
 
 from . import DOMAIN
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__) 
 
 # Esquema de configuração para o fluxo de configuração
 CONFIG_SCHEMA = vol.Schema({
@@ -62,28 +62,3 @@ class WhatsAppMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=CONFIG_SCHEMA,
             errors=errors
         )
-
-async def async_setup_ui(hass):
-    """Configurar a interface do usuário para o WhatsApp Monitor."""
-    
-    # Registrar painel na interface do usuário
-    async def get_panel_url():
-        """Obter URL para o painel do WhatsApp Monitor."""
-        return "/whatsapp-monitor"
-    
-    async def setup_panel():
-        """Configurar o painel na interface do usuário."""
-        await async_register_built_in_panel(
-            hass,
-            "iframe",
-            "WhatsApp Monitor",
-            "mdi:whatsapp",
-            "whatsapp_monitor",
-            {"url": await get_panel_url()},
-            require_admin=True
-        )
-    
-    # Configurar o painel
-    hass.async_create_task(setup_panel())
-    
-    return True
