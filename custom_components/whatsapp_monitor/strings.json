@@ -3,9 +3,9 @@
     "step": {
       "user": {
         "title": "Autenticação WhatsApp Web",
-        "description": "Escaneie o QR code para se conectar ao WhatsApp Web. [Abrir QR Code]({qr_code_url})",
+        "description": "Digite o código de 8 dígitos exibido no WhatsApp do seu smartphone.\n\n1. Abra o WhatsApp no seu smartphone\n2. Toque em Menu > Aparelhos conectados > Conectar um aparelho\n3. Selecione 'Conectar com número de telefone'\n4. Digite o código de 8 dígitos abaixo",
         "data": {
-          "qr_code_scanned": "Já escaneei o QR code"
+          "codigo_autenticacao": "Código de 8 dígitos"
         }
       },
       "config": {
@@ -13,6 +13,24 @@
         "description": "Configure as opções do WhatsApp Monitor",
         "data": {
           "name": "Nome",
+          "palavras_chave_predefinidas": "Palavras-chave predefinidas",
+          "palavras_chave_personalizadas": "Palavras-chave personalizadas (separadas por vírgula)",
+          "intervalo_verificacao": "Intervalo de verificação (minutos)",
+          "intervalo_resumo": "Intervalo de resumo (minutos)",
+          "max_mensagens_resumo": "Máximo de mensagens no resumo"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Dispositivo já está configurado"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opções do WhatsApp Monitor",
+        "description": "Atualize as configurações do WhatsApp Monitor",
+        "data": {
           "palavras_chave_predefinidas": "Palavras-chave predefinidas",
           "palavras_chave_personalizadas": "Palavras-chave personalizadas (separadas por vírgula)",
           "intervalo_verificacao": "Intervalo de verificação (minutos)",
